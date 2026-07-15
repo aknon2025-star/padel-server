@@ -1,0 +1,21 @@
+{
+  "name": "padel-club-server",
+  "version": "1.0.0",
+  "description": "Padel Club backend server - tournaments, bookings, chat",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "better-sqlite3": "^11.3.0",
+    "cors": "^2.8.5",
+    "ws": "^8.18.0",
+    "uuid": "^9.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
