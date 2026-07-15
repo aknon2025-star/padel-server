@@ -7,12 +7,12 @@ const cors = require("cors");
 const http = require("http");
 const { WebSocketServer } = require("ws");
 
-const authRoutes = require("./routes/auth");
-const { router: usersRoutes } = require("./routes/users");
-const bookingsRoutes = require("./routes/bookings");
-const tournamentsRoutes = require("./routes/tournaments");
-const socialRoutes = require("./routes/social");
-const chatRoutes = require("./routes/chat");
+const authRoutes = require("./auth");
+const { router: usersRoutes } = require("./users");
+const bookingsRoutes = require("./bookings");
+const tournamentsRoutes = require("./tournaments");
+const socialRoutes = require("./social");
+const chatRoutes = require("./chat");
 
 const app = express();
 const server = http.createServer(app);
