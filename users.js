@@ -2,7 +2,7 @@
 // Admin-only user management: create/edit coaches, view all players.
 const express = require("express");
 const { v4: uuid } = require("uuid");
-const { db } = require("../db/database");
+const db = require("./database");
 const router = express.Router();
 
 function requireAdmin(req, res, next) {
