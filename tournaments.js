@@ -5,7 +5,7 @@
 
 const express = require("express");
 const { v4: uuid } = require("uuid");
-const { db } = require("../db/database");
+const db = require("./database");
 const { awardPoints } = require("./users");
 const router = express.Router();
 
