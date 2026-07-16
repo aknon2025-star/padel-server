@@ -32,7 +32,7 @@ app.use("/api/bookings", bookingsRoutes);
 app.use("/api/tournaments", tournamentsRoutes);
 app.use("/api/social", socialRoutes);
 app.use("/api/chat", chatRoutes);
-
+app.use("/api/courts", courtsRoutes);
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", time: new Date().toISOString() });
 });
