@@ -13,7 +13,7 @@ const bookingsRoutes = require("./bookings");
 const tournamentsRoutes = require("./tournaments");
 const socialRoutes = require("./social");
 const chatRoutes = require("./chat");
-
+const courtsRoutes = require("./courts");
 const app = express();
 const server = http.createServer(app);
 
