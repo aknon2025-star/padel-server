@@ -1,25 +1,38 @@
 // database.js
-// SQLite database setup — single file, no external DB server needed.
+// Main SQLite database setup.
+// This project uses one shared SQLite database.
 
 const Database = require("better-sqlite3");
 const path = require("path");
 const fs = require("fs");
 
+
+// ─────────────────────────────────────────────────────────────
+// DATABASE CONNECTION
+// ─────────────────────────────────────────────────────────────
+
 const DATA_DIR = path.join(__dirname, "data");
 
 if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
+  fs.mkdirSync(DATA_DIR, {
+    recursive: true,
+  });
 }
 
-const db = new Database(
-  path.join(DATA_DIR, "padel-club.db")
+const DATABASE_PATH = path.join(
+  DATA_DIR,
+  "padel-club.db"
 );
+
+const db = new Database(DATABASE_PATH);
 
 db.pragma("journal_mode = WAL");
 db.pragma("foreign_keys = ON");
 
 
-// ── SCHEMA ──────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// DATABASE SCHEMA
+// ─────────────────────────────────────────────────────────────
 
 db.exec(`
 CREATE TABLE IF NOT EXISTS users (
@@ -40,7 +53,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS courts (
   id INTEGER PRIMARY KEY,
   name TEXT NOT NULL,
-  name_en TEXT NOT NULL,
+  name_en TEXT NOT NULL DEFAULT '',
   club_id TEXT,
   club_name TEXT,
   capacity INTEGER NOT NULL DEFAULT 4,
@@ -60,8 +73,12 @@ CREATE TABLE IF NOT EXISTS court_reservations (
   duration_hours REAL NOT NULL,
   needs_partner INTEGER NOT NULL DEFAULT 0,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (court_id) REFERENCES courts(id),
-  FOREIGN KEY (user_id) REFERENCES users(id)
+
+  FOREIGN KEY (court_id)
+    REFERENCES courts(id),
+
+  FOREIGN KEY (user_id)
+    REFERENCES users(id)
 );
 
 CREATE TABLE IF NOT EXISTS coach_reservations (
@@ -72,8 +89,12 @@ CREATE TABLE IF NOT EXISTS coach_reservations (
   start_hour TEXT NOT NULL,
   duration_hours REAL NOT NULL,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (coach_id) REFERENCES users(id),
-  FOREIGN KEY (user_id) REFERENCES users(id)
+
+  FOREIGN KEY (coach_id)
+    REFERENCES users(id),
+
+  FOREIGN KEY (user_id)
+    REFERENCES users(id)
 );
 
 CREATE TABLE IF NOT EXISTS free_players (
@@ -83,7 +104,9 @@ CREATE TABLE IF NOT EXISTS free_players (
   hour TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'available',
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id)
+
+  FOREIGN KEY (user_id)
+    REFERENCES users(id)
 );
 
 CREATE TABLE IF NOT EXISTS invites (
@@ -105,7 +128,9 @@ CREATE TABLE IF NOT EXISTS tournaments (
   status TEXT NOT NULL DEFAULT 'setup',
   created_by TEXT NOT NULL,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (created_by) REFERENCES users(id)
+
+  FOREIGN KEY (created_by)
+    REFERENCES users(id)
 );
 
 CREATE TABLE IF NOT EXISTS tournament_teams (
@@ -120,7 +145,9 @@ CREATE TABLE IF NOT EXISTS tournament_teams (
   total_points INTEGER NOT NULL DEFAULT 0,
   wins INTEGER NOT NULL DEFAULT 0,
   losses INTEGER NOT NULL DEFAULT 0,
-  FOREIGN KEY (tournament_id) REFERENCES tournaments(id)
+
+  FOREIGN KEY (tournament_id)
+    REFERENCES tournaments(id)
 );
 
 CREATE TABLE IF NOT EXISTS tournament_matches (
@@ -136,7 +163,9 @@ CREATE TABLE IF NOT EXISTS tournament_matches (
   winner_team_id TEXT,
   done INTEGER NOT NULL DEFAULT 0,
   next_match_id TEXT,
-  FOREIGN KEY (tournament_id) REFERENCES tournaments(id)
+
+  FOREIGN KEY (tournament_id)
+    REFERENCES tournaments(id)
 );
 
 CREATE TABLE IF NOT EXISTS friendlies (
@@ -153,7 +182,11 @@ CREATE TABLE IF NOT EXISTS friendlies (
 CREATE TABLE IF NOT EXISTS friendly_players (
   friendly_id TEXT NOT NULL,
   user_id TEXT NOT NULL,
-  PRIMARY KEY (friendly_id, user_id)
+
+  PRIMARY KEY (
+    friendly_id,
+    user_id
+  )
 );
 
 CREATE TABLE IF NOT EXISTS king_interest (
@@ -182,8 +215,10 @@ ON chat_messages(channel, created_at);
 `);
 
 
-// ── COURTS TABLE MIGRATION ──────────────────────────────────
-// این بخش ستون‌های جدید را به دیتابیس قدیمی Railway اضافه می‌کند.
+// ─────────────────────────────────────────────────────────────
+// COURTS TABLE MIGRATION
+// Adds missing columns to older Railway databases.
+// ─────────────────────────────────────────────────────────────
 
 function getCourtColumnNames() {
   return db
@@ -198,16 +233,18 @@ function addCourtColumnIfMissing(
 ) {
   const columns = getCourtColumnNames();
 
-  if (!columns.includes(columnName)) {
-    db.exec(`
-      ALTER TABLE courts
-      ADD COLUMN ${columnName} ${columnDefinition}
-    `);
-
-    console.log(
-      `✓ Added column courts.${columnName}`
-    );
+  if (columns.includes(columnName)) {
+    return;
   }
+
+  db.exec(`
+    ALTER TABLE courts
+    ADD COLUMN ${columnName} ${columnDefinition}
+  `);
+
+  console.log(
+    `✓ Added missing column: courts.${columnName}`
+  );
 }
 
 addCourtColumnIfMissing(
@@ -256,12 +293,17 @@ addCourtColumnIfMissing(
 );
 
 
-// ── USERS SEED ──────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// INITIAL USERS
+// ─────────────────────────────────────────────────────────────
 
 const userCount = db
-  .prepare("SELECT COUNT(*) AS c FROM users")
+  .prepare(`
+    SELECT COUNT(*) AS count
+    FROM users
+  `)
   .get()
-  .c;
+  .count;
 
 if (userCount === 0) {
   const insertUser = db.prepare(`
@@ -368,8 +410,12 @@ if (userCount === 0) {
 }
 
 
-// ── COURTS SEED / UPDATE ────────────────────────────────────
-// این بخش در هر اجرا زمین‌ها را ایجاد یا به‌روزرسانی می‌کند.
+// ─────────────────────────────────────────────────────────────
+// COURTS SEED AND UPDATE
+//
+// ON CONFLICT updates existing Railway records.
+// Therefore old values such as "اصفهان" become "کاشان".
+// ─────────────────────────────────────────────────────────────
 
 const upsertCourt = db.prepare(`
   INSERT INTO courts (
@@ -401,7 +447,7 @@ const upsertCourt = db.prepare(`
 `);
 
 const seedCourts = db.transaction(() => {
-  // مجموعه ورزشی نگارستان
+  // ── مجموعه ورزشی نگارستان ────────────────────────────────
 
   upsertCourt.run(
     1,
@@ -459,7 +505,8 @@ const seedCourts = db.transaction(() => {
     null
   );
 
-  // باشگاه پدل پوینت
+
+  // ── باشگاه پدل پوینت ─────────────────────────────────────
 
   upsertCourt.run(
     5,
@@ -489,7 +536,8 @@ const seedCourts = db.transaction(() => {
     null
   );
 
-  // باشگاه تیک پدل
+
+  // ── باشگاه تیک پدل ───────────────────────────────────────
 
   upsertCourt.run(
     7,
@@ -508,12 +556,54 @@ const seedCourts = db.transaction(() => {
 
 seedCourts();
 
+
+// یک به‌روزرسانی مستقیم اضافه برای اطمینان از اصلاح
+// رکوردهای قدیمی دیتابیس Railway.
+
+const locationUpdateResult = db
+  .prepare(`
+    UPDATE courts
+    SET location = ?
+    WHERE location IS NULL
+       OR location = ''
+       OR location = 'اصفهان'
+       OR location != ?
+  `)
+  .run(
+    "کاشان",
+    "کاشان"
+  );
+
 console.log(
-  "✓ Courts seeded or updated successfully."
+  `✓ Courts seeded or updated successfully.`
+);
+
+console.log(
+  `✓ Court locations updated to Kashan: ${locationUpdateResult.changes} record(s).`
 );
 
 
-// ── CHAT AUTO-PRUNE ─────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// DATABASE VERIFICATION LOG
+// ─────────────────────────────────────────────────────────────
+
+const courtSummary = db
+  .prepare(`
+    SELECT
+      COUNT(*) AS total_courts,
+      COUNT(DISTINCT club_id) AS total_clubs
+    FROM courts
+  `)
+  .get();
+
+console.log(
+  `✓ Database ready: ${courtSummary.total_courts} courts, ${courtSummary.total_clubs} clubs.`
+);
+
+
+// ─────────────────────────────────────────────────────────────
+// CHAT AUTO-PRUNE
+// ─────────────────────────────────────────────────────────────
 
 const MAX_MESSAGES_PER_CHANNEL = 200;
 
@@ -526,47 +616,55 @@ function pruneChat() {
     .all();
 
   for (const { channel } of channels) {
-    const count = db
+    const messageCount = db
       .prepare(`
-        SELECT COUNT(*) AS c
+        SELECT COUNT(*) AS count
         FROM chat_messages
         WHERE channel = ?
       `)
       .get(channel)
-      .c;
+      .count;
 
-    if (count > MAX_MESSAGES_PER_CHANNEL) {
-      db.prepare(`
-        DELETE FROM chat_messages
-        WHERE id IN (
-          SELECT id
-          FROM chat_messages
-          WHERE channel = ?
-          ORDER BY created_at ASC
-          LIMIT ?
-        )
-      `).run(
-        channel,
-        count - MAX_MESSAGES_PER_CHANNEL
-      );
+    if (
+      messageCount <= MAX_MESSAGES_PER_CHANNEL
+    ) {
+      continue;
     }
+
+    const deleteCount =
+      messageCount - MAX_MESSAGES_PER_CHANNEL;
+
+    db.prepare(`
+      DELETE FROM chat_messages
+      WHERE id IN (
+        SELECT id
+        FROM chat_messages
+        WHERE channel = ?
+        ORDER BY created_at ASC
+        LIMIT ?
+      )
+    `).run(
+      channel,
+      deleteCount
+    );
   }
 }
-
-
-// هر ۱۰ دقیقه پیام‌های قدیمی بررسی می‌شوند.
 
 const pruneInterval = setInterval(
   pruneChat,
   10 * 60 * 1000
 );
 
-// جلوگیری از نگه‌داشتن اجباری Process فقط به‌خاطر Timer
-
-if (typeof pruneInterval.unref === "function") {
+if (
+  typeof pruneInterval.unref === "function"
+) {
   pruneInterval.unref();
 }
 
+
+// ─────────────────────────────────────────────────────────────
+// EXPORT
+// ─────────────────────────────────────────────────────────────
 
 module.exports = {
   db,
