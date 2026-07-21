@@ -412,7 +412,7 @@ const seedCourts = db.transaction(() => {
     4,
     "Padel",
     1,
-    "اصفهان",
+    "کاشان",
     0,
     null
   );
@@ -426,7 +426,7 @@ const seedCourts = db.transaction(() => {
     4,
     "Padel",
     1,
-    "اصفهان",
+    "کاشان",
     0,
     null
   );
@@ -440,7 +440,7 @@ const seedCourts = db.transaction(() => {
     4,
     "Padel",
     1,
-    "اصفهان",
+    "کاشان",
     0,
     null
   );
@@ -454,7 +454,7 @@ const seedCourts = db.transaction(() => {
     4,
     "Tennis",
     1,
-    "اصفهان",
+    "کاشان",
     0,
     null
   );
@@ -470,7 +470,7 @@ const seedCourts = db.transaction(() => {
     4,
     "Padel",
     1,
-    "اصفهان",
+    "کاشان",
     0,
     null
   );
@@ -484,7 +484,7 @@ const seedCourts = db.transaction(() => {
     4,
     "Padel",
     1,
-    "اصفهان",
+    "کاشان",
     0,
     null
   );
@@ -500,7 +500,7 @@ const seedCourts = db.transaction(() => {
     4,
     "Padel",
     1,
-    "اصفهان",
+    "کاشان",
     0,
     null
   );
