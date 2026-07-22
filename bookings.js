@@ -16,7 +16,90 @@ function rangeOverlaps(startA, hoursA, startB, hoursB) {
   const bS = bStart, bE = bStart + hoursB;
   return aS < bE && bS < aE;
 }
+// GET reservations of one court
+// GET /api/bookings/court/:courtId?date=YYYY-MM-DD
+router.get("/court/:courtId", (req, res) => {
 
+  try {
+
+    const { courtId } = req.params;
+    const { date } = req.query;
+
+
+    let rows;
+
+
+    if(date){
+
+      rows = db.prepare(`
+        SELECT 
+          cr.*,
+          u.name AS user_name,
+          c.name AS court_name
+
+        FROM court_reservations cr
+
+        JOIN users u 
+        ON cr.user_id = u.id
+
+        JOIN courts c
+        ON cr.court_id = c.id
+
+        WHERE cr.court_id = ?
+        AND cr.date = ?
+
+        ORDER BY cr.start_hour ASC
+
+      `)
+      .all(courtId,date);
+
+
+    } else {
+
+
+      rows = db.prepare(`
+        SELECT 
+          cr.*,
+          u.name AS user_name,
+          c.name AS court_name
+
+        FROM court_reservations cr
+
+        JOIN users u 
+        ON cr.user_id = u.id
+
+        JOIN courts c
+        ON cr.court_id = c.id
+
+        WHERE cr.court_id = ?
+
+        ORDER BY cr.date ASC, cr.start_hour ASC
+
+      `)
+      .all(courtId);
+
+
+    }
+
+
+
+    res.json({
+      reservations: rows
+    });
+
+
+
+  } catch(err){
+
+    console.error(err);
+
+    res.status(500).json({
+      error:"Cannot load court reservations"
+    });
+
+  }
+
+});
 // ── COURTS ──────────────────────────────────────────────────
 router.get("/courts", (req, res) => {
   const courts = db.prepare("SELECT * FROM courts").all();
