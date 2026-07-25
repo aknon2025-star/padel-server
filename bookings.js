@@ -2,7 +2,10 @@
 
 const express = require("express");
 const { v4: uuid } = require("uuid");
-const db = require("./database");
+
+const database = require("./database");
+
+const db = database.db || database;
 
 const router = express.Router();
 
@@ -25,7 +28,6 @@ const HOURS = [
   "21:00",
   "22:00"
 ];
-
 
 
 function rangeOverlaps(
