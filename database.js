@@ -667,4 +667,4 @@ if (
 
 module.exports = db;
 
-};
+
