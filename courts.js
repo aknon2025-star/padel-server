@@ -1,8 +1,8 @@
-// routes/courts.js
+// courts.js
 // Court routes
 
 const express = require("express");
-const db = require("../db/database");
+const db = require("./db/database");
 
 const router = express.Router();
 
